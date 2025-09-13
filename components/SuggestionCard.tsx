@@ -13,6 +13,7 @@ interface SuggestionCardProps {
 
 export default function SuggestionCard({ suggestion, onBook, isBooking = false }: SuggestionCardProps) {
   const [showAssumptions, setShowAssumptions] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const confidenceColor = suggestion.confidence > 0.8 ? 'text-green-600' : 
                          suggestion.confidence > 0.6 ? 'text-yellow-600' : 'text-red-600';
@@ -99,24 +100,61 @@ export default function SuggestionCard({ suggestion, onBook, isBooking = false }
         <div className="text-sm text-gray-600 bg-white/60 px-3 py-2 rounded-lg border border-gray-200">
           <span className="font-semibold">Available members:</span> {suggestion.availableMembers.join(', ')}
         </div>
-        
-        <button
-          onClick={() => onBook(suggestion)}
-          disabled={isBooking}
-          className="btn-primary flex items-center space-x-2 px-6 py-3"
-        >
-          {isBooking ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Booking...</span>
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-5 w-5" />
-              <span>Book This Slot</span>
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={async () => {
+              setDownloading(true);
+              try {
+                const res = await fetch('/api/ics', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: 'SynchroSched Meeting',
+                    start: suggestion.start,
+                    end: suggestion.end,
+                    description: suggestion.normalizedSummary,
+                  }),
+                });
+                if (!res.ok) throw new Error('Failed');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'event.ics';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+              } catch {
+                // no-op for now
+              } finally {
+                setDownloading(false);
+              }
+            }}
+            disabled={downloading}
+            className="bg-white/70 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-white/90"
+            aria-label="Download ICS"
+          >
+            {downloading ? 'Preparing…' : 'Download .ics'}
+          </button>
+          <button
+            onClick={() => onBook(suggestion)}
+            disabled={isBooking}
+            className="btn-primary flex items-center space-x-2 px-6 py-3"
+          >
+            {isBooking ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Booking...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-5 w-5" />
+                <span>Book This Slot</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

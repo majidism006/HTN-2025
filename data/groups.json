@@ -22,5 +22,248 @@
     "members": [],
     "createdAt": "2025-09-13T14:39:21.287Z",
     "updatedAt": "2025-09-13T14:39:21.287Z"
+  },
+  "d40ac1a9-909a-47b2-8bc8-913f33409910": {
+    "id": "d40ac1a9-909a-47b2-8bc8-913f33409910",
+    "code": "MOLAA0",
+    "name": "New Group",
+    "members": [],
+    "createdAt": "2025-09-13T21:35:01.537Z",
+    "updatedAt": "2025-09-13T21:35:01.537Z"
+  },
+  "c332b653-f4c1-4168-82fb-6314191b2877": {
+    "id": "c332b653-f4c1-4168-82fb-6314191b2877",
+    "code": "45D69J",
+    "name": "New Group",
+    "members": [
+      {
+        "id": "7bc35cdc-d434-4b68-b826-0de9ec746390",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "7bc35cdc-d434-4b68-b826-0de9ec746390",
+          "events": [
+            {
+              "id": "5478638f-7dc5-488f-abb8-e7ab41284ee3",
+              "title": "Sample Meeting",
+              "start": "2025-09-13T23:43:13.258Z",
+              "end": "2025-09-14T00:43:13.258Z",
+              "priority": "medium",
+              "isBusy": true
+            },
+            {
+              "id": "507acad1-d7b2-49cc-a489-fac86f69244d",
+              "title": "Lunch Break",
+              "start": "2025-09-14T02:43:13.258Z",
+              "end": "2025-09-14T03:43:13.258Z",
+              "priority": "low",
+              "isBusy": true
+            }
+          ]
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T21:42:50.121Z",
+    "updatedAt": "2025-09-13T21:43:13.258Z"
+  },
+  "bb54d869-5fc0-4db6-8145-41d1cfa138a3": {
+    "id": "bb54d869-5fc0-4db6-8145-41d1cfa138a3",
+    "code": "FIYIC0",
+    "name": "New Group",
+    "members": [],
+    "createdAt": "2025-09-13T21:43:32.971Z",
+    "updatedAt": "2025-09-13T21:43:32.971Z"
+  },
+  "f0b3c107-4814-4591-92db-f4a1816ae3af": {
+    "id": "f0b3c107-4814-4591-92db-f4a1816ae3af",
+    "code": "HPJ958",
+    "name": "New Group",
+    "members": [],
+    "createdAt": "2025-09-13T21:43:38.135Z",
+    "updatedAt": "2025-09-13T21:43:38.135Z"
+  },
+  "d20e4f20-0da4-48f4-aa0a-2617edee91d2": {
+    "id": "d20e4f20-0da4-48f4-aa0a-2617edee91d2",
+    "code": "XKBNFJ",
+    "name": "New Group",
+    "members": [],
+    "createdAt": "2025-09-13T21:43:46.195Z",
+    "updatedAt": "2025-09-13T21:43:46.195Z"
+  },
+  "d9a2766e-1207-4c9f-9129-c200cfe50645": {
+    "id": "d9a2766e-1207-4c9f-9129-c200cfe50645",
+    "code": "6OZ9IP",
+    "name": "New Group",
+    "members": [],
+    "createdAt": "2025-09-13T21:46:16.984Z",
+    "updatedAt": "2025-09-13T21:46:16.984Z"
+  },
+  "2688c906-6442-468e-95ac-a8564c4a79f9": {
+    "id": "2688c906-6442-468e-95ac-a8564c4a79f9",
+    "code": "ZZZN6Q",
+    "name": "New Group",
+    "members": [],
+    "createdAt": "2025-09-13T22:08:23.514Z",
+    "updatedAt": "2025-09-13T22:08:23.514Z"
+  },
+  "b3102d8c-19c2-4025-b6cf-7e159529386e": {
+    "id": "b3102d8c-19c2-4025-b6cf-7e159529386e",
+    "code": "TWP81G",
+    "name": "New Group",
+    "members": [],
+    "createdAt": "2025-09-13T22:29:54.601Z",
+    "updatedAt": "2025-09-13T22:29:54.601Z"
+  },
+  "87cbd93b-bf2f-43e7-bc99-00697f692c66": {
+    "id": "87cbd93b-bf2f-43e7-bc99-00697f692c66",
+    "code": "CZN045",
+    "name": "Study Buddies",
+    "members": [
+      {
+        "id": "5a63c449-ea10-4f52-81f1-859741625c6e",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "5a63c449-ea10-4f52-81f1-859741625c6e",
+          "events": []
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T22:44:34.848Z",
+    "updatedAt": "2025-09-13T22:44:34.848Z"
+  },
+  "dc6c4ad9-9f2a-41d1-b4ef-7d03f8d73b26": {
+    "id": "dc6c4ad9-9f2a-41d1-b4ef-7d03f8d73b26",
+    "code": "OZT0UT",
+    "name": "Study Buddies",
+    "members": [
+      {
+        "id": "525837fc-5bf1-408b-b41b-e0993fe96f96",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "525837fc-5bf1-408b-b41b-e0993fe96f96",
+          "events": []
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T22:44:34.878Z",
+    "updatedAt": "2025-09-13T22:44:34.878Z"
+  },
+  "5f43f2ec-c731-4187-af05-153bf99d71cc": {
+    "id": "5f43f2ec-c731-4187-af05-153bf99d71cc",
+    "code": "DMADI3",
+    "name": "Study Buddies",
+    "members": [
+      {
+        "id": "e2533327-2780-4a09-bbc5-5a42d25ef112",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "e2533327-2780-4a09-bbc5-5a42d25ef112",
+          "events": []
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T23:03:13.599Z",
+    "updatedAt": "2025-09-13T23:03:13.599Z"
+  },
+  "656d1fb0-8eff-4040-a30f-2efbaa68e535": {
+    "id": "656d1fb0-8eff-4040-a30f-2efbaa68e535",
+    "code": "QAE5LT",
+    "name": "Study Buddies",
+    "members": [
+      {
+        "id": "cda07119-88b3-4321-a096-e962cc6e29e2",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "cda07119-88b3-4321-a096-e962cc6e29e2",
+          "events": []
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T23:05:18.142Z",
+    "updatedAt": "2025-09-13T23:05:18.142Z"
+  },
+  "1c19b558-fcb8-48e4-8c8f-63356b798704": {
+    "id": "1c19b558-fcb8-48e4-8c8f-63356b798704",
+    "code": "9VOMU6",
+    "name": "Study Buddies",
+    "members": [
+      {
+        "id": "bfae0494-9dd6-43b3-a357-168d9b74ce0a",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "bfae0494-9dd6-43b3-a357-168d9b74ce0a",
+          "events": []
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T23:13:34.078Z",
+    "updatedAt": "2025-09-13T23:13:34.078Z"
+  },
+  "c7c87e9e-02dd-4f82-8881-ffa2a4b9d14c": {
+    "id": "c7c87e9e-02dd-4f82-8881-ffa2a4b9d14c",
+    "code": "S3HUXO",
+    "name": "Study Buddies",
+    "members": [
+      {
+        "id": "06bdefe4-af68-4aa6-abd0-d1f5735f6b87",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "06bdefe4-af68-4aa6-abd0-d1f5735f6b87",
+          "events": [
+            {
+              "id": "bef1f723-03e1-4905-9dfb-e899c87dbd2a",
+              "title": "SynchroSched Meeting",
+              "start": "2025-09-13T04:00:00.000Z",
+              "end": "2025-09-13T05:00:00.000Z",
+              "priority": "medium",
+              "isBusy": true
+            },
+            {
+              "id": "ce5da42f-00c3-439d-9bee-d8357cea4910",
+              "title": "SynchroSched Meeting",
+              "start": "2025-09-13T04:00:00.000Z",
+              "end": "2025-09-13T05:00:00.000Z",
+              "priority": "medium",
+              "isBusy": true
+            }
+          ]
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T23:24:06.602Z",
+    "updatedAt": "2025-09-13T23:26:31.715Z"
+  },
+  "4e91c706-9bdf-4b59-817b-9b7f95a429f3": {
+    "id": "4e91c706-9bdf-4b59-817b-9b7f95a429f3",
+    "code": "R2W72N",
+    "name": "Study Buddies",
+    "members": [
+      {
+        "id": "b66d1d9e-bf16-472c-a0a5-9b58fe0903a5",
+        "name": "Taisir",
+        "isIncluded": true,
+        "calendar": {
+          "userId": "b66d1d9e-bf16-472c-a0a5-9b58fe0903a5",
+          "events": [
+            {
+              "id": "8a74ed16-da77-456b-bd24-b2a73e425603",
+              "title": "SynchroSched Meeting",
+              "start": "2025-09-13T04:00:00.000Z",
+              "end": "2025-09-13T05:00:00.000Z",
+              "priority": "medium",
+              "isBusy": true
+            }
+          ]
+        }
+      }
+    ],
+    "createdAt": "2025-09-13T23:29:03.361Z",
+    "updatedAt": "2025-09-13T23:31:15.712Z"
   }
 }

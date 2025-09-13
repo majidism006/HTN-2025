@@ -1,32 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parseRequest } from '@/lib/parsing';
+import { parseSmart } from '@/lib/ai';
 
-// Parse natural language request into scheduling constraints
-export async function POST(request: NextRequest) {
+export const runtime = 'nodejs';
+
+export async function POST(req: NextRequest) {
   try {
-    const { transcript, timezone, nowIso } = await request.json();
-
-    if (!transcript) {
-      return NextResponse.json(
-        { success: false, error: 'Transcript is required' },
-        { status: 400 }
-      );
+    const { text } = await req.json();
+    if (!text || typeof text !== 'string') {
+      return NextResponse.json({ error: 'Missing text' }, { status: 400 });
     }
-
-    // Parse the transcript
-    const parsed = parseRequest(transcript);
-
-    return NextResponse.json({
-      success: true,
-      constraints: parsed.constraints,
-      normalizedSummary: parsed.normalizedSummary,
-      assumptions: parsed.assumptions,
-    });
-  } catch (error) {
-    console.error('Error parsing request:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    const parsed = await parseSmart(text);
+    return NextResponse.json({ success: true, parsed });
+  } catch (e: any) {
+    return NextResponse.json({ success: false, error: e?.message || 'Parse failed' }, { status: 500 });
   }
 }

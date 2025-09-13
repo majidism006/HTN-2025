@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useGroup } from '@/hooks/useGroup';
 import { useCalendars } from '@/hooks/useCalendars';
 import { useSuggestions } from '@/hooks/useSuggestions';
@@ -10,7 +11,9 @@ import MemberList from '@/components/MemberList';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import SuggestionCard from '@/components/SuggestionCard';
 import CalendarList from '@/components/CalendarList';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import GoogleConnect from '@/components/GoogleConnect';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
   const { groupId, userId, userName, groupCode, isInGroup, setGroup, clearGroup } = useGroup();
@@ -24,17 +27,55 @@ export default function HomePage() {
   const [joinName, setJoinName] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
+  const [banner, setBanner] = useState<string>('');
+  const { user: authUser, loading: authLoading } = useAuth();
 
-  // Check for group code in URL
+  const router = useRouter();
+
+  // Check for group code in URL; redirect to canonical /group/[code]
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const groupCodeParam = urlParams.get('g');
+    const googleConnected = urlParams.get('google');
     
     if (groupCodeParam && !isInGroup) {
-      setJoinCode(groupCodeParam);
-      setShowJoinForm(true);
+      router.replace(`/group/${groupCodeParam}`);
+      return;
+    }
+
+    if (googleConnected === 'connected') {
+      setBanner('Google Calendar connected. Events will be created automatically for you.');
+      urlParams.delete('google');
+      const newUrl = `${window.location.pathname}?${urlParams.toString()}`.replace(/\?$/, '');
+      window.history.replaceState({}, '', newUrl);
+      setTimeout(() => setBanner(''), 4000);
     }
   }, [isInGroup]);
+
+  // Prefill join name from Auth0 profile
+  useEffect(() => {
+    if (!joinName && authUser?.name) {
+      setJoinName(authUser.name);
+    }
+  }, [authUser, joinName]);
+
+  // Subscribe to SSE for live updates and refetch calendars
+  useEffect(() => {
+    if (!groupId) return;
+    const es = new EventSource(`/api/events/stream?groupId=${encodeURIComponent(groupId)}`);
+    es.onmessage = (evt) => {
+      try {
+        const data = JSON.parse(evt.data);
+        if (data?.type === 'booking' && data?.groupId === groupId) {
+          refetchCalendars();
+        }
+      } catch {}
+    };
+    es.onerror = () => {
+      es.close();
+    };
+    return () => es.close();
+  }, [groupId, refetchCalendars]);
 
   // Update members when calendars change
   useEffect(() => {
@@ -53,19 +94,22 @@ export default function HomePage() {
     }
   }, [calendars]);
 
-  const handleCreateGroup = async (groupName: string) => {
+  const handleCreateGroup = async (groupName: string, creatorName: string) => {
     try {
       const response = await fetch('/api/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', groupName }),
+        body: JSON.stringify({ action: 'create', groupName, memberName: creatorName }),
       });
 
       const data = await response.json();
       
       if (data.success) {
-        setGroup(data.group.id, 'creator', 'Creator', data.group.code);
+        const memberId = data.group.memberId || 'creator';
+        const memberName = data.group.memberName || creatorName || 'Creator';
+        setGroup(data.group.id, memberId, memberName, data.group.code);
         setShowJoinForm(false);
+        router.push(`/group/${data.group.code}`);
       } else {
         setJoinError(data.error || 'Failed to create group');
       }
@@ -99,6 +143,7 @@ export default function HomePage() {
       if (data.success) {
         setGroup(data.group.id, data.group.memberId, data.group.memberName, data.group.code);
         setShowJoinForm(false);
+        router.push(`/group/${data.group.code}`);
         setJoinCode('');
         setJoinName('');
       } else {
@@ -123,12 +168,14 @@ export default function HomePage() {
 
   const handleParseComplete = async (constraints: SchedulingConstraints, summary: string, assumptions: string[]) => {
     if (!groupId) return;
-    
-    const includedMemberIds = members
-      .filter(m => m.isIncluded)
-      .map(m => m.id);
-    
-    await getSuggestions(groupId, constraints, includedMemberIds);
+    const includedMemberIds = members.filter(m => m.isIncluded).map(m => m.id);
+    const suggs = await getSuggestions(groupId, constraints, includedMemberIds);
+    if (suggs && suggs.length > 0) {
+      // Auto-book first suggestion
+      await handleBookSlot(suggs[0]);
+    } else {
+      alert('No suggestions found for the given constraints.');
+    }
   };
 
   const handleBookSlot = async (suggestion: Suggestion) => {
@@ -156,6 +203,30 @@ export default function HomePage() {
       if (data.success) {
         // Refresh calendars
         await refetchCalendars();
+        // Auto-download ICS
+        try {
+          const res = await fetch('/api/ics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: data.event?.title || 'SynchroSched Meeting',
+              start: data.event?.start || suggestion.start,
+              end: data.event?.end || suggestion.end,
+              description: 'Auto-scheduled via SynchroSched',
+            }),
+          });
+          if (res.ok) {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'event.ics';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          }
+        } catch {}
         alert('Meeting booked successfully!');
       } else {
         alert('Failed to book meeting: ' + data.error);
@@ -208,9 +279,32 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Join Form */}
+            {/* Join or Create Group */}
             <div className="card-gradient">
               <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-gray-800">Join or Create a Group</h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const to = window.location.pathname + window.location.search;
+                        window.location.href = `/api/auth/login?returnTo=${encodeURIComponent(to)}`;
+                      }}
+                      className="btn-secondary text-sm"
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => {
+                        const to = window.location.pathname + window.location.search;
+                        window.location.href = `/api/auth/login?returnTo=${encodeURIComponent(to)}&screen_hint=signup`;
+                      }}
+                      className="bg-white/80 border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-white"
+                    >
+                      Sign up
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <label htmlFor="groupCode" className="block text-sm font-semibold text-gray-700 mb-3">
                     Group Code
@@ -238,6 +332,17 @@ export default function HomePage() {
                     placeholder="Enter your name"
                     className="input-field"
                   />
+                  {authUser?.name && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setJoinName(authUser.name || '')}
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        Use my Auth0 name ({authUser.name})
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {joinError && (
@@ -277,8 +382,28 @@ export default function HomePage() {
                     </div>
                   </div>
 
+                  <div>
+                    <label htmlFor="newGroupName" className="block text-sm font-semibold text-gray-700 mb-3">
+                      New Group Name
+                    </label>
+                    <input
+                      id="newGroupName"
+                      type="text"
+                      placeholder="e.g., Study Buddies"
+                      className="input-field"
+                      onChange={(e) => (e.target as any)._val = e.target.value}
+                    />
+                  </div>
                   <button
-                    onClick={() => handleCreateGroup('New Group')}
+                    onClick={() => {
+                      const input = document.getElementById('newGroupName') as HTMLInputElement | null;
+                      const gname = input?.value?.trim() || 'New Group';
+                      if (!joinName) {
+                        setJoinError('Please enter your name to create a group');
+                        return;
+                      }
+                      handleCreateGroup(gname, joinName);
+                    }}
                     className="btn-secondary w-full"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -334,6 +459,15 @@ export default function HomePage() {
           onLeaveGroup={handleLeaveGroup}
         />
 
+        {banner && (
+          <div className="max-w-7xl mx-auto px-6 mt-4">
+            <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="text-sm font-medium">{banner}</span>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-7xl mx-auto p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column - Members and Voice Input */}
@@ -343,6 +477,10 @@ export default function HomePage() {
                 onToggleMember={handleToggleMember}
                 currentUserId={userId!}
               />
+
+              {userId && (
+                <GoogleConnect userId={userId} />
+              )}
 
               <VoiceRecorder
                 onParseComplete={handleParseComplete}

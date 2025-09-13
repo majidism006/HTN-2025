@@ -38,6 +38,22 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date().toISOString(),
       };
 
+      // If creator name is provided, create initial member for the group
+      let creatorMemberId: string | null = null;
+      if (memberName && typeof memberName === 'string' && memberName.trim().length > 0) {
+        const creatorId = uuidv4();
+        creatorMemberId = creatorId;
+        group.members.push({
+          id: creatorId,
+          name: memberName.trim(),
+          isIncluded: true,
+          calendar: {
+            userId: creatorId,
+            events: [],
+          },
+        });
+      }
+
       await saveGroup(group);
 
       return NextResponse.json({
@@ -46,7 +62,9 @@ export async function POST(request: NextRequest) {
           id: group.id,
           code: group.code,
           name: group.name,
-          joinLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}?g=${group.code}`,
+          memberId: creatorMemberId,
+          memberName: memberName || null,
+          joinLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/group/${group.code}`,
         },
       });
     }

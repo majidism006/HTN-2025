@@ -120,8 +120,40 @@ export default function CalendarList({ calendars, members }: CalendarListProps) 
                             )}
                           </div>
                         </div>
-                        <div className="text-xs font-bold text-gray-600 bg-white/60 px-3 py-1 rounded-full capitalize">
-                          {event.priority}
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="text-xs font-semibold bg-white/70 border border-gray-200 rounded-full px-3 py-1 hover:bg-white/90"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch('/api/ics', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    title: event.title,
+                                    start: event.start,
+                                    end: event.end,
+                                    description: `${getMemberName(calendar.userId)}'s event`,
+                                    location: event.location,
+                                  }),
+                                });
+                                if (!res.ok) return;
+                                const blob = await res.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${event.title}.ics`;
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                                URL.revokeObjectURL(url);
+                              } catch {}
+                            }}
+                          >
+                            Download .ics
+                          </button>
+                          <div className="text-xs font-bold text-gray-600 bg-white/60 px-3 py-1 rounded-full capitalize">
+                            {event.priority}
+                          </div>
                         </div>
                       </div>
                     </div>
