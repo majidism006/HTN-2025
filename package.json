@@ -6,9 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup-aws-credentials": "node scripts/setup-aws-credentials.js",
+    "create-dynamodb-table": "node scripts/create-dynamodb-table.js",
+    "migrate-to-dynamodb": "node scripts/migrate-to-dynamodb.js",
+    "test-dynamodb": "node scripts/test-dynamodb.js"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.0.0",
     "@types/uuid": "^10.0.0",
     "date-fns": "^4.1.0",
     "groq-sdk": "^0.32.0",
