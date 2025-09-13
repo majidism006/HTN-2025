@@ -13,7 +13,7 @@ import CalendarList from '@/components/CalendarList';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 export default function HomePage() {
-  const { groupId, userId, userName, groupCode, isInGroup, setGroup, clearGroup } = useGroup();
+  const { groupId, userId, userName, groupCode, groupName, isInGroup, setGroup, clearGroup } = useGroup();
   const { calendars, loading: calendarsLoading, error: calendarsError, refetch: refetchCalendars } = useCalendars(groupId);
   const { suggestions, loading: suggestionsLoading, error: suggestionsError, getSuggestions } = useSuggestions();
   
@@ -54,17 +54,22 @@ export default function HomePage() {
   }, [calendars]);
 
   const handleCreateGroup = async (groupName: string) => {
+    if (!joinName.trim()) {
+      setJoinError('Please enter your name to create a group');
+      return;
+    }
+
     try {
       const response = await fetch('/api/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', groupName }),
+        body: JSON.stringify({ action: 'create', groupName, memberName: joinName }),
       });
 
       const data = await response.json();
       
       if (data.success) {
-        setGroup(data.group.id, 'creator', 'Creator', data.group.code);
+        setGroup(data.group.id, data.group.memberId, data.group.memberName, data.group.code, data.group.name);
         setShowJoinForm(false);
       } else {
         setJoinError(data.error || 'Failed to create group');
@@ -97,7 +102,7 @@ export default function HomePage() {
       const data = await response.json();
       
       if (data.success) {
-        setGroup(data.group.id, data.group.memberId, data.group.memberName, data.group.code);
+        setGroup(data.group.id, data.group.memberId, data.group.memberName, data.group.code, data.group.name);
         setShowJoinForm(false);
         setJoinCode('');
         setJoinName('');
@@ -279,7 +284,8 @@ export default function HomePage() {
 
                   <button
                     onClick={() => handleCreateGroup('New Group')}
-                    className="btn-secondary w-full"
+                    disabled={!joinName.trim()}
+                    className="btn-secondary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -329,7 +335,7 @@ export default function HomePage() {
       <div>
         <GroupHeader
           groupCode={groupCode!}
-          groupName="SynchroSched Group"
+          groupName={groupName || "SynchroSched Group"}
           memberCount={members.length}
           onLeaveGroup={handleLeaveGroup}
         />

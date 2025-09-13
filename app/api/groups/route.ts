@@ -20,6 +20,13 @@ export async function POST(request: NextRequest) {
 
     if (action === 'create') {
       // Create new group
+      if (!memberName || memberName.trim() === '') {
+        return NextResponse.json(
+          { success: false, error: 'Member name is required when creating a group' },
+          { status: 400 }
+        );
+      }
+
       const groupId = uuidv4();
       const code = generateGroupCode();
       
@@ -29,11 +36,41 @@ export async function POST(request: NextRequest) {
         uniqueCode = generateGroupCode();
       }
 
+      // Create the creating user as the first member
+      const creatorId = uuidv4();
+      const creatorMember: Member = {
+        id: creatorId,
+        name: memberName,
+        isIncluded: true,
+        calendar: {
+          userId: creatorId,
+          events: [
+            // Seed with some sample busy events
+            {
+              id: uuidv4(),
+              title: 'Sample Meeting',
+              start: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+              end: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours from now
+              priority: 'medium',
+              isBusy: true,
+            },
+            {
+              id: uuidv4(),
+              title: 'Lunch Break',
+              start: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), // 5 hours from now
+              end: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now
+              priority: 'low',
+              isBusy: true,
+            },
+          ],
+        },
+      };
+
       const group: Group = {
         id: groupId,
         code: uniqueCode,
         name: groupName || 'New Group',
-        members: [],
+        members: [creatorMember],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -46,6 +83,8 @@ export async function POST(request: NextRequest) {
           id: group.id,
           code: group.code,
           name: group.name,
+          memberId: creatorMember.id,
+          memberName: creatorMember.name,
           joinLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}?g=${group.code}`,
         },
       });
