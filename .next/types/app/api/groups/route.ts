@@ -1,4 +1,4 @@
-// File: C:\Users\iibra\Desktop\htn2025\HTN-2025\app\api\groups\route.ts
+// File: /home/hadi/HTN-2025/app/api/groups/route.ts
 import * as entry from '../../../../../app/api/groups/route.js'
 import type { NextRequest } from 'next/server.js'
 

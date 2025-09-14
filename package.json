@@ -6,13 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup-aws-credentials": "node scripts/setup-aws-credentials.js",
+    "create-dynamodb-table": "node scripts/create-dynamodb-table.js",
+    "migrate-to-dynamodb": "node scripts/migrate-to-dynamodb.js",
+    "test-dynamodb": "node scripts/test-dynamodb.js"
   },
   "dependencies": {
     "@trycua/computer": "^0.1.3",
     "@trycua/core": "^0.1.3",
     "googleapis": "^132.0.0",
     "@auth0/nextjs-auth0": "^3.5.0",
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.0.0",
     "@types/uuid": "^10.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -29,6 +35,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",

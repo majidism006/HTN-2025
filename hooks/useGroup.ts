@@ -5,6 +5,7 @@ interface GroupState {
   userId: string | null;
   userName: string | null;
   groupCode: string | null;
+  groupName: string | null;
 }
 
 export function useGroup() {
@@ -13,35 +14,50 @@ export function useGroup() {
     userId: null,
     userName: null,
     groupCode: null,
+    groupName: null,
   });
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('synchrosched-group');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setGroupState(parsed);
-      } catch (error) {
-        console.error('Error parsing saved group state:', error);
+    try {
+      const saved = localStorage.getItem('synchrosched-group');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setGroupState(parsed);
+        } catch (error) {
+          console.error('Error parsing saved group state:', error);
+          // Clear corrupted data
+          localStorage.removeItem('synchrosched-group');
+        }
       }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
     }
   }, []);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
     if (groupState.groupId) {
-      localStorage.setItem('synchrosched-group', JSON.stringify(groupState));
+      try {
+        localStorage.setItem('synchrosched-group', JSON.stringify(groupState));
+      } catch (error) {
+        console.error('Error saving group state to localStorage:', error);
+      }
     }
   }, [groupState]);
 
-  const setGroup = (groupId: string, userId: string, userName: string, groupCode: string) => {
-    setGroupState({ groupId, userId, userName, groupCode });
+  const setGroup = (groupId: string, userId: string, userName: string, groupCode: string, groupName?: string) => {
+    setGroupState({ groupId, userId, userName, groupCode, groupName: groupName || null });
   };
 
   const clearGroup = () => {
-    setGroupState({ groupId: null, userId: null, userName: null, groupCode: null });
-    localStorage.removeItem('synchrosched-group');
+    setGroupState({ groupId: null, userId: null, userName: null, groupCode: null, groupName: null });
+    try {
+      localStorage.removeItem('synchrosched-group');
+    } catch (error) {
+      console.error('Error clearing group state from localStorage:', error);
+    }
   };
 
   const isInGroup = groupState.groupId !== null;
