@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { Mic, MicOff, Send, Loader2 } from 'lucide-react';
 import { parseRequest } from '@/lib/parsing';
 import { SchedulingConstraints } from '@/lib/types';
+import dynamic from 'next/dynamic';
+
+const VapiRealtime = dynamic(() => import('./VapiRealtime'), { ssr: false });
 
 interface VoiceRecorderProps {
   onParseComplete: (constraints: SchedulingConstraints, summary: string, assumptions: string[]) => void;
@@ -16,6 +19,8 @@ export default function VoiceRecorder({ onParseComplete, onError }: VoiceRecorde
   const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const hasRealtime = !!process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
+  const [useRealtime, setUseRealtime] = useState<boolean>(hasRealtime);
 
   const startRecording = async () => {
     try {
@@ -53,32 +58,68 @@ export default function VoiceRecorder({ onParseComplete, onError }: VoiceRecorde
 
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
-    
     try {
-      // For now, we'll simulate voice processing with a text input
-      // In a real implementation, this would send audio to VAPI
-      const mockTranscript = "Schedule a 2-hour study session tomorrow evening with John and Sarah at the library";
-      
-      // Parse the transcript
-      const parsed = parseRequest(mockTranscript);
-      onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
-      setTranscript(mockTranscript);
+      const form = new FormData();
+      form.append('audio', audioBlob, 'audio.wav');
+      const res = await fetch('/api/vapi/transcribe', { method: 'POST', body: form });
+      if (!res.ok) {
+        throw new Error('Transcription failed');
+      }
+      const data = await res.json();
+      const text = data.transcript as string;
+      if (!text) throw new Error('Empty transcript');
+      // Try server AI parser first (Cohere/Groq/Gemini), fallback to regex
+      try {
+        const pr = await fetch('/api/parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+        if (pr.ok) {
+          const data = await pr.json();
+          if (data?.parsed) {
+            onParseComplete(data.parsed.constraints, data.parsed.normalizedSummary, data.parsed.assumptions || []);
+          } else {
+            const parsed = parseRequest(text);
+            onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
+          }
+        } else {
+          const parsed = parseRequest(text);
+          onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
+        }
+      } catch {
+        const parsed = parseRequest(text);
+        onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
+      }
+      setTranscript(text);
     } catch (error) {
       console.error('Error processing audio:', error);
-      onError('Failed to process audio. Please try again.');
+      onError('Failed to transcribe with VAPI. You can type your request and parse it instead.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleTextSubmit = () => {
+  const handleTextSubmit = async () => {
     if (!transcript.trim()) return;
     
     setIsProcessing(true);
     
     try {
-      const parsed = parseRequest(transcript);
-      onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
+      try {
+        const pr = await fetch('/api/parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: transcript }) });
+        if (pr.ok) {
+          const data = await pr.json();
+          if (data?.parsed) {
+            onParseComplete(data.parsed.constraints, data.parsed.normalizedSummary, data.parsed.assumptions || []);
+          } else {
+            const parsed = parseRequest(transcript);
+            onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
+          }
+        } else {
+          const parsed = parseRequest(transcript);
+          onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
+        }
+      } catch (e) {
+        const parsed = parseRequest(transcript);
+        onParseComplete(parsed.constraints, parsed.normalizedSummary, parsed.assumptions);
+      }
     } catch (error) {
       console.error('Error parsing text:', error);
       onError('Failed to parse request. Please try again.');
@@ -86,6 +127,12 @@ export default function VoiceRecorder({ onParseComplete, onError }: VoiceRecorde
       setIsProcessing(false);
     }
   };
+
+  if (useRealtime && hasRealtime) {
+    return (
+      <VapiRealtime onParseComplete={onParseComplete} onError={onError} />
+    );
+  }
 
   return (
     <div className="card-gradient">
@@ -96,8 +143,15 @@ export default function VoiceRecorder({ onParseComplete, onError }: VoiceRecorde
           <span>AI Powered</span>
         </div>
       </div>
-      
+
       <div className="space-y-6">
+        {hasRealtime && (
+          <div className="flex items-center justify-between p-3 bg-white/60 border border-gray-200 rounded-xl">
+            <span className="text-sm text-gray-700">Prefer realtime voice with Vapi?</span>
+            <button className="btn-secondary" onClick={() => setUseRealtime(true)}>Use Realtime</button>
+          </div>
+        )}
+
         <div>
           <label htmlFor="transcript" className="block text-sm font-semibold text-gray-700 mb-3">
             Describe your meeting (or use voice input):
@@ -109,6 +163,7 @@ export default function VoiceRecorder({ onParseComplete, onError }: VoiceRecorde
             placeholder="e.g., 'Schedule a 2-hour study session tomorrow evening with John and Sarah at the library'"
             className="input-field resize-none"
             rows={4}
+            aria-label="Scheduling request text input"
           />
         </div>
 
@@ -121,6 +176,8 @@ export default function VoiceRecorder({ onParseComplete, onError }: VoiceRecorde
                 ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg hover:shadow-xl'
                 : 'bg-white/60 text-gray-700 hover:bg-white/80 border border-gray-200'
             } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-pressed={isRecording}
+            aria-label={isRecording ? 'Stop recording' : 'Start recording'}
           >
             {isRecording ? (
               <>
@@ -139,6 +196,7 @@ export default function VoiceRecorder({ onParseComplete, onError }: VoiceRecorde
             onClick={handleTextSubmit}
             disabled={!transcript.trim() || isProcessing}
             className="btn-primary flex-1"
+            aria-label="Parse typed request"
           >
             {isProcessing ? (
               <>

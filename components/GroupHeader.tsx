@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Copy, Users, Share2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface GroupHeaderProps {
   groupCode: string;
@@ -12,8 +13,9 @@ interface GroupHeaderProps {
 
 export default function GroupHeader({ groupCode, groupName, memberCount, onLeaveGroup }: GroupHeaderProps) {
   const [copied, setCopied] = useState(false);
+  const { user, loading, login, logout } = useAuth();
 
-  const joinLink = `${window.location.origin}?g=${groupCode}`;
+  const joinLink = `${window.location.origin}/group/${groupCode}`;
 
   const copyLink = async () => {
     try {
@@ -56,6 +58,33 @@ export default function GroupHeader({ groupCode, groupName, memberCount, onLeave
             <code className="px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-mono text-lg font-bold tracking-wider shadow-lg">
               {groupCode}
             </code>
+          </div>
+
+          <div className="flex items-center space-x-3 bg-white/60 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/30">
+            {loading ? (
+              <span className="text-sm text-gray-600">Checking auth…</span>
+            ) : user ? (
+              <>
+                {user.picture ? (
+                  <img src={user.picture} alt={user.name || 'User'} className="w-6 h-6 rounded-full" />
+                ) : null}
+                <span className="text-sm font-semibold text-gray-700">{user.name || user.email || 'Authenticated'}</span>
+                <button onClick={logout} className="btn-ghost text-sm">Logout</button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button onClick={() => login()} className="btn-secondary text-sm">Login</button>
+                <button
+                  onClick={() => {
+                    const to = window.location.pathname + window.location.search;
+                    window.location.href = `/api/auth/login?returnTo=${encodeURIComponent(to)}&screen_hint=signup`;
+                  }}
+                  className="bg-white/80 border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-white"
+                >
+                  Sign up
+                </button>
+              </div>
+            )}
           </div>
 
           <button
