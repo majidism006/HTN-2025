@@ -68,8 +68,16 @@ export function getDateRange(constraint: TimeConstraint, now: Date = new Date())
     return { start: startOfDay(date), end: endOfDay(date) };
   }
   
-  // Default to today
-  return { start: startOfDay(now), end: endOfDay(now) };
+  // Default to next business day if current time is outside business hours
+  const currentHour = now.getHours();
+  let targetDate = now;
+  
+  // If it's before 9 AM or after 5 PM, schedule for next business day
+  if (currentHour < 9 || currentHour >= 17) {
+    targetDate = addDays(now, 1);
+  }
+  
+  return { start: startOfDay(targetDate), end: endOfDay(targetDate) };
 }
 
 // Format time for display

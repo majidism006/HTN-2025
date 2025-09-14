@@ -94,7 +94,6 @@ export default function HomePage() {
     }
   }, [calendars]);
 
-  const handleCreateGroup = async (groupName: string, creatorName: string) => {
   const handleCreateGroup = async (groupName: string) => {
     if (!joinName.trim()) {
       setJoinError('Please enter your name to create a group');
@@ -105,16 +104,12 @@ export default function HomePage() {
       const response = await fetch('/api/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', groupName, memberName: creatorName }),
         body: JSON.stringify({ action: 'create', groupName, memberName: joinName }),
       });
 
       const data = await response.json();
       
       if (data.success) {
-        const memberId = data.group.memberId || 'creator';
-        const memberName = data.group.memberName || creatorName || 'Creator';
-        setGroup(data.group.id, memberId, memberName, data.group.code);
         setGroup(data.group.id, data.group.memberId, data.group.memberName, data.group.code, data.group.name);
         setShowJoinForm(false);
         router.push(`/group/${data.group.code}`);
@@ -406,14 +401,8 @@ export default function HomePage() {
                     onClick={() => {
                       const input = document.getElementById('newGroupName') as HTMLInputElement | null;
                       const gname = input?.value?.trim() || 'New Group';
-                      if (!joinName) {
-                        setJoinError('Please enter your name to create a group');
-                        return;
-                      }
-                      handleCreateGroup(gname, joinName);
+                      handleCreateGroup(gname);
                     }}
-                    className="btn-secondary w-full"
-                    onClick={() => handleCreateGroup('New Group')}
                     disabled={!joinName.trim()}
                     className="btn-secondary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >

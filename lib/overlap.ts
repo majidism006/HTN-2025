@@ -57,7 +57,14 @@ function findFreeSlots(
   // Sort by start time
   relevantBusy.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
   
-  let currentTime = startTime;
+  // Start looking for slots at 9 AM if it's a business day
+  let currentTime = new Date(startTime);
+  const startHour = currentTime.getHours();
+  
+  // If we're starting before 9 AM, move to 9 AM
+  if (startHour < 9) {
+    currentTime.setHours(9, 0, 0, 0);
+  }
   
   for (const busy of relevantBusy) {
     const busyStart = new Date(busy.start);
@@ -80,16 +87,24 @@ function findFreeSlots(
     currentTime = busyEnd > currentTime ? busyEnd : currentTime;
   }
   
-  // Check for free time after the last busy interval
+  // Check for free time after the last busy interval, but not after 5 PM
   if (currentTime < endTime) {
-    const remainingDuration = endTime.getTime() - currentTime.getTime();
-    const remainingMinutes = remainingDuration / (1000 * 60);
+    // Don't schedule meetings after 5 PM
+    const endOfBusinessDay = new Date(currentTime);
+    endOfBusinessDay.setHours(17, 0, 0, 0);
     
-    if (remainingMinutes >= minDuration) {
-      freeSlots.push({
-        start: currentTime,
-        end: endTime
-      });
+    const actualEndTime = endTime < endOfBusinessDay ? endTime : endOfBusinessDay;
+    
+    if (currentTime < actualEndTime) {
+      const remainingDuration = actualEndTime.getTime() - currentTime.getTime();
+      const remainingMinutes = remainingDuration / (1000 * 60);
+      
+      if (remainingMinutes >= minDuration) {
+        freeSlots.push({
+          start: currentTime,
+          end: actualEndTime
+        });
+      }
     }
   }
   

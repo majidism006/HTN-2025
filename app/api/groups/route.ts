@@ -3,6 +3,100 @@ import { v4 as uuidv4 } from 'uuid';
 import { Group, Member } from '@/lib/types';
 import { saveGroup, getGroupByCode } from '@/lib/storage';
 
+// Generate realistic calendar events for a week
+function generateWeekCalendar(userId: string, isBob: boolean = false): any[] {
+  const events = [];
+  
+  // Set demo date to Sunday, September 14th, 2025
+  const demoDate = new Date(2025, 8, 14); // Month is 0-indexed, so 8 = September
+  const startOfWeek = new Date(demoDate);
+  startOfWeek.setHours(9, 0, 0, 0); // Start at 9 AM
+
+  // Generate lightly filled calendar for demo - Sunday to Saturday
+  for (let day = 0; day < 7; day++) {
+    const currentDay = new Date(startOfWeek);
+    currentDay.setDate(startOfWeek.getDate() + day);
+    
+    // Add some events to most days but keep some empty for comparison
+    if (day === 0) { // Sunday - mostly empty
+      // Keep Sunday mostly free
+    }
+    
+    if (day === 1) { // Monday - add overlapping team meeting
+      events.push({
+        id: uuidv4(),
+        title: 'Team Sync Meeting',
+        start: new Date(currentDay.getTime() + 4 * 60 * 60 * 1000).toISOString(),
+        end: new Date(currentDay.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+        priority: 'high',
+        isBusy: true,
+      });
+    }
+    
+    if (day === 2) { // Tuesday - add individual work
+      events.push({
+        id: uuidv4(),
+        title: isBob ? 'Client Follow-up' : 'Development Work',
+        start: new Date(currentDay.getTime() + 1 * 60 * 60 * 1000).toISOString(),
+        end: new Date(currentDay.getTime() + 3 * 60 * 60 * 1000).toISOString(),
+        priority: 'medium',
+        isBusy: true,
+      });
+    }
+    
+    if (day === 3) { // Wednesday - add overlapping team meeting + individual event
+      events.push({
+        id: uuidv4(),
+        title: 'Team Sync Meeting',
+        start: new Date(currentDay.getTime() + 4 * 60 * 60 * 1000).toISOString(),
+        end: new Date(currentDay.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+        priority: 'high',
+        isBusy: true,
+      });
+      
+      // Add individual event for Bob
+      if (isBob) {
+        events.push({
+          id: uuidv4(),
+          title: 'Client Meeting',
+          start: new Date(currentDay.getTime() + 1 * 60 * 60 * 1000).toISOString(),
+          end: new Date(currentDay.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          priority: 'high',
+          isBusy: true,
+        });
+      }
+    }
+    
+    if (day === 4) { // Thursday - add some work
+      events.push({
+        id: uuidv4(),
+        title: isBob ? 'Project Review' : 'Code Review',
+        start: new Date(currentDay.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        end: new Date(currentDay.getTime() + 4 * 60 * 60 * 1000).toISOString(),
+        priority: 'medium',
+        isBusy: true,
+      });
+    }
+    
+    if (day === 5) { // Friday - add end of week meeting
+      events.push({
+        id: uuidv4(),
+        title: 'Weekly Retrospective',
+        start: new Date(currentDay.getTime() + 3 * 60 * 60 * 1000).toISOString(),
+        end: new Date(currentDay.getTime() + 4 * 60 * 60 * 1000).toISOString(),
+        priority: 'high',
+        isBusy: true,
+      });
+    }
+    
+    if (day === 6) { // Saturday - mostly empty
+      // Keep Saturday mostly free
+    }
+  }
+
+  return events;
+}
+
 // Generate a unique 6-character code
 function generateGroupCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -44,25 +138,7 @@ export async function POST(request: NextRequest) {
         isIncluded: true,
         calendar: {
           userId: creatorId,
-          events: [
-            // Seed with some sample busy events
-            {
-              id: uuidv4(),
-              title: 'Sample Meeting',
-              start: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
-              end: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours from now
-              priority: 'medium',
-              isBusy: true,
-            },
-            {
-              id: uuidv4(),
-              title: 'Lunch Break',
-              start: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), // 5 hours from now
-              end: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now
-              priority: 'low',
-              isBusy: true,
-            },
-          ],
+          events: generateWeekCalendar(creatorId, false),
         },
       };
 
@@ -75,22 +151,6 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date().toISOString(),
       };
 
-      // If creator name is provided, create initial member for the group
-      let creatorMemberId: string | null = null;
-      if (memberName && typeof memberName === 'string' && memberName.trim().length > 0) {
-        const creatorId = uuidv4();
-        creatorMemberId = creatorId;
-        group.members.push({
-          id: creatorId,
-          name: memberName.trim(),
-          isIncluded: true,
-          calendar: {
-            userId: creatorId,
-            events: [],
-          },
-        });
-      }
-
       await saveGroup(group);
 
       return NextResponse.json({
@@ -99,7 +159,7 @@ export async function POST(request: NextRequest) {
           id: group.id,
           code: group.code,
           name: group.name,
-          memberId: creatorMemberId,
+          memberId: creatorId,
           memberName: memberName || null,
           joinLink: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/group/${group.code}`,
         },
@@ -146,25 +206,7 @@ export async function POST(request: NextRequest) {
         isIncluded: true,
         calendar: {
           userId: memberId,
-          events: [
-            // Seed with some sample busy events
-            {
-              id: uuidv4(),
-              title: 'Sample Meeting',
-              start: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
-              end: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours from now
-              priority: 'medium',
-              isBusy: true,
-            },
-            {
-              id: uuidv4(),
-              title: 'Lunch Break',
-              start: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), // 5 hours from now
-              end: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now
-              priority: 'low',
-              isBusy: true,
-            },
-          ],
+          events: generateWeekCalendar(memberId, false),
         },
       };
 
